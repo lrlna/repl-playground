@@ -1,0 +1,17 @@
+{
+  "name": "yu",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@mongosh/service-provider-server": "0.0.1-alpha.15",
+    "@mongosh/shell-evaluator": "0.0.1-alpha.15",
+    "is-recoverable-error": "^1.0.1",
+    "nanobus": "^4.4.0"
+  }
+}
