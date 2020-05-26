@@ -28,16 +28,19 @@ connect(function (err, serviceProvider) {
   async function customEval (input, context, filename, callback) {
     var result
 
-    try {
-      console.log(queue)
-      result = await queue.add(() => shellEvaluator.customEval(originalEval, input, context, filename))
-    } catch (err) {
-      if (isRecoverableError(input)) {
-        return callback(new Recoverable(err))
+    await queue.add(evalTask)
+
+    async function evalTask () {
+      try {
+        result = await shellEvaluator.customEval(originalEval, input, context, filename)
+      } catch (err) {
+        if (isRecoverableError(input)) {
+          return callback(new Recoverable(err))
+        }
+        result = err
       }
-      result = err
+      callback(null, result)
     }
-    callback(null, result)
   }
 
   r.eval = customEval
@@ -47,10 +50,6 @@ connect(function (err, serviceProvider) {
   })
 
 })
-
-function writer(input) {
-  util.inspect(input)
-}
 
 function connect(callback) {
   CliServiceProvider.connect('mongodb://127.0.0.1:27017', {})
