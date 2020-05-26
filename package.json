@@ -12,6 +12,8 @@
     "@mongosh/service-provider-server": "0.0.1-alpha.15",
     "@mongosh/shell-evaluator": "0.0.1-alpha.15",
     "is-recoverable-error": "^1.0.1",
-    "nanobus": "^4.4.0"
+    "nanobus": "^4.4.0",
+    "p-debounce": "^2.1.0",
+    "p-queue": "^6.4.0"
   }
 }

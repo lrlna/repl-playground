@@ -1,5 +1,6 @@
 var CliServiceProvider = require('@mongosh/service-provider-server').CliServiceProvider
 var ShellEvaluator = require('@mongosh/shell-evaluator').default
+var { default: PQueue } = require('p-queue')
 var isRecoverableError = require('is-recoverable-error')
 var Nanobus = require('nanobus')
 var repl = require('repl')
@@ -22,18 +23,27 @@ connect(function (err, serviceProvider) {
 
   var originalEval = util.promisify(r.eval)
 
-  var customEval = async(input, context, filename, callback) => {
-    let result
+  var queue = new PQueue({ concurrency: 1 })
 
-    try {
-      result = await shellEvaluator.customEval(originalEval, input, context, filename)
-    } catch (err) {
-      if (isRecoverableError(input)) {
-        return callback(new Recoverable(err))
+  var customEval = async(input, context, filename, callback) => {
+    var result
+
+    await queue.onIdle().then(queue.add(queueTask))
+
+    async function queueTask() {
+      console.log('here')
+      try {
+        result = await shellEvaluator.customEval(originalEval, input, context, filename)
+      } catch (err) {
+        console.log('queue error')
+        if (isRecoverableError(input)) {
+          return callback(new Recoverable(err))
+        }
+        result = err
       }
-      result = err
+      callback(null, result)
     }
-    callback(null, result)
+
   }
 
   r.eval = customEval
