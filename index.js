@@ -25,25 +25,19 @@ connect(function (err, serviceProvider) {
 
   var queue = new PQueue({ concurrency: 1 })
 
-  var customEval = async(input, context, filename, callback) => {
+  async function customEval (input, context, filename, callback) {
     var result
 
-    await queue.onIdle().then(queue.add(queueTask))
-
-    async function queueTask() {
-      console.log('here')
-      try {
-        result = await shellEvaluator.customEval(originalEval, input, context, filename)
-      } catch (err) {
-        console.log('queue error')
-        if (isRecoverableError(input)) {
-          return callback(new Recoverable(err))
-        }
-        result = err
+    try {
+      console.log(queue)
+      result = await queue.add(() => shellEvaluator.customEval(originalEval, input, context, filename))
+    } catch (err) {
+      if (isRecoverableError(input)) {
+        return callback(new Recoverable(err))
       }
-      callback(null, result)
+      result = err
     }
-
+    callback(null, result)
   }
 
   r.eval = customEval
