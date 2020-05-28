@@ -1,6 +1,5 @@
 var CliServiceProvider = require('@mongosh/service-provider-server').CliServiceProvider
 var ShellEvaluator = require('@mongosh/shell-evaluator').default
-var { default: PQueue } = require('p-queue')
 var isRecoverableError = require('is-recoverable-error')
 var Nanobus = require('nanobus')
 var repl = require('repl')
@@ -16,6 +15,7 @@ connect(function (err, serviceProvider) {
   var options = {
     useColors: true,
     ignoreUndefined: true,
+    writer: formatOutput,
     prompt: '>',
   }
 
@@ -23,24 +23,20 @@ connect(function (err, serviceProvider) {
 
   var originalEval = util.promisify(r.eval)
 
-  var queue = new PQueue({ concurrency: 1 })
-
-  async function customEval (input, context, filename, callback) {
-    var result
-
-    await queue.add(evalTask)
-
-    async function evalTask () {
-      try {
-        result = await shellEvaluator.customEval(originalEval, input, context, filename)
-      } catch (err) {
-        if (isRecoverableError(input)) {
-          return callback(new Recoverable(err))
-        }
-        result = err
-      }
-      callback(null, result)
+  function customEval (input, context, filename, callback) {
+    if (isRecoverableError(input)) {
+      return callback(new Recoverable(new SyntaxError()));
     }
+
+    shellEvaluator.customEval(originalEval, input, context, filename)
+      .then((result) => {
+        callback(null, result)
+        return;
+      })
+      .catch((err) => {
+        callback(err)
+        return
+      })
   }
 
   r.eval = customEval
@@ -49,7 +45,13 @@ connect(function (err, serviceProvider) {
     process.exit()
   })
 
+  shellEvaluator.setCtx(r.context);
+
+  function formatOutput(output) {
+    return util.inspect(output.value);
+  }
 })
+
 
 function connect(callback) {
   CliServiceProvider.connect('mongodb://127.0.0.1:27017', {})
