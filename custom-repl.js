@@ -1,8 +1,5 @@
-var isRecoverableError = require('is-recoverable-error')
 var repl = require('repl')
 var util = require('util')
-
-var Recoverable = repl.Recoverable
 
 var options = {
   useColors: true,
@@ -28,10 +25,6 @@ function customEval (input, context, filename, callback) {
       return callback(null, result)
     })
     .catch((err) => {
-      if (isRecoverableError(input)) {
-        return callback(new Recoverable(new SyntaxError()))
-      }
-
       return callback(err)
     })
 }
