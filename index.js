@@ -24,18 +24,18 @@ connect(function (err, serviceProvider) {
   var originalEval = util.promisify(r.eval)
 
   function customEval (input, context, filename, callback) {
+    if (input === '\n' || input === '') return callback(null)
+    
     if (isRecoverableError(input)) {
-      return callback(new Recoverable(new SyntaxError()));
+      return callback(new Recoverable(new SyntaxError()))
     }
 
     shellEvaluator.customEval(originalEval, input, context, filename)
       .then((result) => {
-        callback(null, result)
-        return;
+        return callback(null, result)
       })
       .catch((err) => {
-        callback(err)
-        return
+        return eallback(err)
       })
   }
 
