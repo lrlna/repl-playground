@@ -35,7 +35,7 @@ connect(function (err, serviceProvider) {
         return callback(null, result)
       })
       .catch((err) => {
-        return eallback(err)
+        return callback(err)
       })
   }
 
